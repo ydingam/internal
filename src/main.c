@@ -82,6 +82,7 @@ static int16_t pid_control(const int16_t setPoint, const int16_t current, float*
 static THD_WORKING_AREA(motor_ctrl_thread_wa,512);
 static THD_FUNCTION(motor_ctrl_thread, p)
 {
+    (void) p;
 	int16_t strafe = 0, drive = 0, rotation = 0;   //move direction for chassis
     Encoder_canStruct* encoder = can_getEncoder(); //Pointer to motor encoder feedbakc
     static float motor_error_int[4]; //error integrators for the four motors

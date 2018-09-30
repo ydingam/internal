@@ -188,11 +188,6 @@ CPPWARN = -Wall -Wextra -Wundef
 # Start of user section
 #
 
-upload: build/$(PROJECT).bin
-	#qstlink2 --cli --erase --write build/$(PROJECT).bin
-	#openocd -f interface/stlink-v2.cfg -c "set WORKAREASIZE 0x2000" -f target/stm32f4x_stlink.cfg -c "program build/$(PROJECT).elf verify reset" # Older openocd
-	openocd -f interface/stlink-v2.cfg -c "set WORKAREASIZE 0x2000" -f target/stm32f1x_stlink.cfg "reset_config trst_only combined" -c "program build/$(PROJECT).elf verify reset exit" # For openocd 0.9
-
 # List all user C define here, like -D_DEBUG=1
 UDEFS =
 ifeq ($(USE_MAPLEMINI_BOOTLOADER),1)
@@ -217,3 +212,7 @@ ULIBS =
 
 RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk
 include $(RULESPATH)/rules.mk
+
+#optional make option for also uploading to the board
+upload: build/$(PROJECT).bin
+	openocd -f openocd/start_st-link_flash.cfg

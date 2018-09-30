@@ -34,6 +34,7 @@ static void decryptDBUS(void)
  */
 static void rxend(UARTDriver *uartp)
 {
+    (void)uartp;
     chSysLockFromISR();
     chThdResumeI(&uart_dbus_thread_handler, MSG_OK);
     chSysUnlockFromISR();
@@ -47,8 +48,8 @@ static UARTConfig uart_cfg =
 {
     NULL,NULL,rxend,NULL,NULL,	//Call-back functions
     100000, 					//Baudrate
-    USART_CR1_PCE,				//EVEN Parity bit
-    0,
+    USART_CR1_PCE | USART_CR1_M,				//EVEN Parity bit
+    USART_CR2_LBDL,
     0
 };
 
@@ -89,7 +90,7 @@ static THD_FUNCTION(uart_dbus_thread, p)
         uartStartReceive(UART_DBUS, DBUS_BUFFER_SIZE, rxbuf);
 
         chSysLock();
-        chThdSuspendTimeoutS(&uart_dbus_thread_handler, TIME_INFINITE);
+        rxmsg = chThdSuspendTimeoutS(&uart_dbus_thread_handler, TIME_INFINITE);
         chSysUnlock();
 
         if(rxmsg == MSG_OK)

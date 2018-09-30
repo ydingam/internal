@@ -9,7 +9,7 @@
 
 #include "canBusProcess.h"
 
-static volatile Encoder_canStruct _encoder[CHASSIS_MOTOR_NUM];
+volatile Encoder_canStruct _encoder[CHASSIS_MOTOR_NUM];
 
 /*
  * 1M baud, automatic wakeup, automatic recover
@@ -28,7 +28,7 @@ static CANFilter canfilter[CAN_FILTER_NUM];
 
 volatile Encoder_canStruct* can_getEncoder(void)
 {
-  return &_encoder;
+  return _encoder;
 }
 
 
