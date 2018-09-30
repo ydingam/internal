@@ -16,10 +16,17 @@
 
 #define CAN_ENCODER_RANGE              8192            // 0x2000
 
+typedef enum {
+    FL_WHEEL = 0,
+    FR_WHEEL = 1,
+    BR_WHEEL = 2,
+    BL_WHEEL = 3
+} wheel_id_t;
+
 typedef struct {
-    uint16_t raw_angle;
-    int16_t raw_speed;
-    int16_t act_current;
+    uint16_t angle_rotor_raw;
+    int16_t speed_rpm;
+    int16_t current_raw;
     uint8_t temperature;
 
     int32_t round_count;

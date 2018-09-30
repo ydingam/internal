@@ -80,7 +80,7 @@ static THD_FUNCTION(uart_dbus_thread, p)
     chRegSetThreadName("uart dbus receiver");
 
     msg_t rxmsg;
-    systime_t timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);
+    systime_t timeout = TIME_MS2I(DBUS_INIT_WAIT_TIME_MS);
     uint32_t count = 0;
 
     while(!chThdShouldTerminateX())
@@ -89,28 +89,28 @@ static THD_FUNCTION(uart_dbus_thread, p)
         uartStartReceive(UART_DBUS, DBUS_BUFFER_SIZE, rxbuf);
 
         chSysLock();
-        rxmsg = chThdSuspendTimeoutS(&uart_dbus_thread_handler, timeout);
+        chThdSuspendTimeoutS(&uart_dbus_thread_handler, TIME_INFINITE);
         chSysUnlock();
 
         if(rxmsg == MSG_OK)
         {
-          if(!rc_state)
-          {
-            timeout = MS2ST(DBUS_WAIT_TIME_MS);
-            rc_state = RC_UNLOCKED;
-          }
-          else
-          {
-            chSysLock();
-            decryptDBUS();
-            chSysUnlock();
-          }
+            if(!rc_state)
+            {
+                timeout = TIME_MS2I(DBUS_WAIT_TIME_MS);
+                rc_state = RC_UNLOCKED;
+            }
+            else
+            {
+                chSysLock();
+                decryptDBUS();
+                chSysUnlock();
+            }
         }
         else
         {
-          rc_state = RC_UNCONNECTED;
-          RC_reset();
-          timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);
+            rc_state = RC_UNCONNECTED;
+            RC_reset();
+            timeout = TIME_MS2I(DBUS_INIT_WAIT_TIME_MS);
         }
     }
 }

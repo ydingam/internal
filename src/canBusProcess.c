@@ -19,7 +19,7 @@ static volatile Encoder_canStruct _encoder[CHASSIS_MOTOR_NUM];
  */
 static const CANConfig cancfg = {
   CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
-  CAN_BTR_SJW(0) | CAN_BTR_TS2(3) |
+  CAN_BTR_SJW(0) | CAN_BTR_TS2(1) |
   CAN_BTR_TS1(8) | CAN_BTR_BRP(2)
 };
 
@@ -31,6 +31,7 @@ volatile Encoder_canStruct* can_getEncoder(void)
   return &_encoder;
 }
 
+
 #define CAN_ENCODER_RADIAN_RATIO    7.669904e-4f    // 2*M_PI / 0x2000
 static void can_processEncoder
   (volatile Encoder_canStruct* cm, const CANRxFrame* const rxmsg)
@@ -41,7 +42,7 @@ static void can_processEncoder
   cm->updated = true;
   cm->angle_rotor_raw = (uint16_t)(rxmsg->data8[0]) << 8 | rxmsg->data8[1];
   cm->speed_rpm       = (int16_t)(rxmsg->data8[2]) << 8 | rxmsg->data8[3];
-  cm->act_current     = (int16_t)(rxmsg->data8[4]) << 8 | rxmsg->data8[5];
+  cm->current_raw     = (int16_t)(rxmsg->data8[4]) << 8 | rxmsg->data8[5];
   cm->temperature     = (uint8_t)rxmsg->data8[6];
 
   if      (cm->angle_rotor_raw - prev_angle >  CAN_ENCODER_RANGE / 2) cm->round_count--;
@@ -60,15 +61,8 @@ static void can_processEncoderMessage(const CANRxFrame* const rxmsg)
         case CHASSIS_MOTOR_FL_EID:
             can_processEncoder(&_encoder[FL_WHEEL], rxmsg);
             break;
-        case CHASSIS_MOTOR_FR_EID:
-            can_processEncoder(&_encoder[FR_WHEEL], rxmsg);
-            break;
-        case CHASSIS_MOTOR_BR_EID:
-            can_processEncoder(&_encoder[BR_WHEEL], rxmsg);
-            break;
-        case CHASSIS_MOTOR_BL_EID:
-            can_processEncoder(&_encoder[BL_WHEEL], rxmsg);
-            break;
+
+        //TODO process the rest of motor encoder feedback
 
         default:break;
     }
@@ -89,7 +83,7 @@ static THD_FUNCTION(can_rx, p) {
   chEvtRegister(&canp->rxfull_event, &el, 0);
   while(!chThdShouldTerminateX())
   {
-    if (chEvtWaitAnyTimeout(ALL_EVENTS, MS2ST(100)) == 0)
+    if (chEvtWaitAnyTimeout(ALL_EVENTS, TIME_MS2I(100)) == 0)
       continue;
     while (canReceive(canp, CAN_ANY_MAILBOX,
                       &rxmsg, TIME_IMMEDIATE) == MSG_OK)
@@ -138,15 +132,15 @@ void can_motorSetCurrent(
 
     chSysUnlock();
 
-    canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
+    canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
 }
 
 
 void can_processInit(void)
 {
   memset((void *)_encoder, 0, sizeof(Encoder_canStruct)*CHASSIS_MOTOR_NUM);
-  uint8_t i;
 
+  uint8_t i;
   for (i = 0; i < CAN_FILTER_NUM; i++)
   {
     canfilter[i].filter = i;
@@ -156,7 +150,7 @@ void can_processInit(void)
     canfilter[i].register1 = 0;
     canfilter[i].register2 = 0;
   }
-  canSTM32SetFilters(14, CAN_FILTER_NUM, canfilter);
+  canSTM32SetFilters(&CAND1, 14, CAN_FILTER_NUM, canfilter);
 
   canStart(&CAND1, &cancfg);
   /*
@@ -164,6 +158,4 @@ void can_processInit(void)
    */
   chThdCreateStatic(can_rx1_wa, sizeof(can_rx1_wa), NORMALPRIO + 7,
                     can_rx, (void *)&CAND1);
-
-  chThdSleepMilliseconds(200);
 }

@@ -71,7 +71,7 @@ endif
 
 # Enables the use of FPU (no, softfp, hard).
 ifeq ($(USE_FPU),)
-  USE_FPU = hard
+  USE_FPU = no
 endif
 
 #
@@ -84,7 +84,7 @@ endif
 
 # Define project name here
 PROJECT = RMInternalDev
-CONFDIR = ./dev
+CONFDIR = ./cfg
 
 # Imported source files and paths
 CHIBIOS = ./
@@ -96,38 +96,24 @@ include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f1xx.m
 # HAL-OSAL files (optional).
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/hal/ports/STM32/STM32F1xx/platform.mk
-include ./hw/board.mk
+include ./board/board.mk
 include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 # Other files (optional).
-include $(CHIBIOS)/os/hal/lib/streams/streams.mk
-include $(CHIBIOS)/os/various/shell/shell.mk
 
 # Define linker script file here
-LDSCRIPT = $(STARTUPLD)/STM32F429xI.ld
+LDSCRIPT = ./STM32F103x8.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-CSRC = $(STARTUPSRC) \
-       	$(KERNSRC) \
-       	$(PORTSRC) \
-       	$(OSALSRC) \
-       	$(HALSRC) \
-       	$(PLATFORMSRC) \
-       	$(BOARDSRC) \
-       	$(MATHSRC) \
-		$(CHIBIOS)/os/various/shell.c \
-       	$(CHIBIOS)/os/various/evtimer.c \
-       	$(CHIBIOS)/os/various/syscalls.c \
-		$(CHIBIOS)/os/hal/lib/streams/memstreams.c \
-       	$(CHIBIOS)/os/hal/lib/streams/chprintf.c \
-       	./dev/main.c ./dev/math_misc.c ./dev/canBusProcess.c ./dev/dbus.c
+CSRC = $(ALLCSRC) \
+	   ./src/main.c ./src/dbus.c ./src/canBusProcess.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-CPPSRC = 
+CPPSRC =
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
@@ -150,15 +136,10 @@ TCSRC =
 TCPPSRC =
 
 # List ASM source files here
-ASMSRC =  $(STARTUPASM) $(PORTASM) $(OSALASM)
-ASMXSRC = 
+ASMSRC = $(ALLASMSRC)
+ASMXSRC = $(ALLXASMSRC)
 
-INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
-         $(HALINC) $(PLATFORMINC) $(BOARDINC) \
-         $(CHIBIOS)/dev \
-         $(CHIBIOS)/os/various \
-		 $(CHIBIOS)/os/hal/lib/streams \
-		 $(CHIBIOS)/dev/inc -lm
+INCDIR = $(ALLINC) $(TESTINC) $(CONFDIR) ./src
 
 #
 # Project, sources and paths
@@ -168,7 +149,7 @@ INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
 # Compiler settings
 #
 
-MCU  = cortex-m4
+MCU  = cortex-m3
 
 #TRGT = arm-elf-
 TRGT = arm-none-eabi-
@@ -207,6 +188,11 @@ CPPWARN = -Wall -Wextra -Wundef
 # Start of user section
 #
 
+upload: build/$(PROJECT).bin
+	#qstlink2 --cli --erase --write build/$(PROJECT).bin
+	#openocd -f interface/stlink-v2.cfg -c "set WORKAREASIZE 0x2000" -f target/stm32f4x_stlink.cfg -c "program build/$(PROJECT).elf verify reset" # Older openocd
+	openocd -f interface/stlink-v2.cfg -c "set WORKAREASIZE 0x2000" -f target/stm32f1x_stlink.cfg "reset_config trst_only combined" -c "program build/$(PROJECT).elf verify reset exit" # For openocd 0.9
+
 # List all user C define here, like -D_DEBUG=1
 UDEFS =
 ifeq ($(USE_MAPLEMINI_BOOTLOADER),1)
@@ -228,12 +214,6 @@ ULIBS =
 #
 # End of user defines
 ##############################################################################
-
-# Program
-upload: build/$(PROJECT).bin
-	#qstlink2 --cli --erase --write build/$(PROJECT).bin
-	#openocd -f interface/stlink-v2.cfg -c "set WORKAREASIZE 0x2000" -f target/stm32f4x_stlink.cfg -c "program build/$(PROJECT).elf verify reset" # Older openocd
-	openocd -f board/stm32f4discovery.cfg -c "reset_config trst_only combined" -c "program build/$(PROJECT).elf verify reset exit" # For openocd 0.9
 
 RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk
 include $(RULESPATH)/rules.mk

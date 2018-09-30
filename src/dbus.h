@@ -7,7 +7,7 @@
 #define RC_CH_VALUE_MAX              ((uint16_t)1684)
 #define DBUS_BUFFER_SIZE             ((uint8_t)18)
 
-#define UART_DBUS                     &UARTD1
+#define UART_DBUS                     &UARTD2
 
 typedef enum{
 	RC_S_DUMMY = 0,
