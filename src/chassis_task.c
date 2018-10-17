@@ -2,7 +2,7 @@
 
 
 chassis_speed_t chassis_speed;   //speed of chassis
-int16_t motor_speed_sp[4];      //speed set-point for motor
+int16_t motor_speed_sp[4] = {0};      //speed set for motor
 
 
 void abs_limit(float *data,float max)
@@ -52,15 +52,34 @@ float pid_calcu(pid_s_t *pid,float set,float get)
 
 void get_chassis_speed(void)
 {
-  chassis_speed.vx = RC_Ctl.channel0 * VX_AMPLIFICATION_TATIO/RC_MAC_RANGE * MAX_CHASSIS_VX_SPEED;
-  chassis_speed.vy = RC_Ctl.channel1 * VY_AMPLIFICATION_TATIO/RC_MAC_RANGE * MAX_CHASSIS_VY_SPEED;
-  chassis_speed.vw = RC_Ctl.channel2 * VW_AMPLIFICATION_TATIO/RC_MAC_RANGE * MAX_CHASSIS_VW_SPEED;
+  chassis_speed.vx = RC_Ctl.channel0 * VX_AMPLIFICATION_RATIO/RC_MAX_RANGE * MAX_CHASSIS_VX_SPEED;
+  chassis_speed.vy = RC_Ctl.channel1 * VY_AMPLIFICATION_RATIO/RC_MAX_RANGE * MAX_CHASSIS_VY_SPEED;
+  chassis_speed.vw = RC_Ctl.channel2 * VW_AMPLIFICATION_RATIO/RC_MAX_RANGE * MAX_CHASSIS_VW_SPEED;
 }
 
 void drive_meccanum(const int16_t vx, const int16_t vy, const int16_t vw)
 {
- motor_speed_sp[0] = (+vx - vy + vw * rotate_ratio_f) * motor_speed_sp_ratio;
- motor_speed_sp[1] = (+vx + vy + vw * rotate_ratio_f) * motor_speed_sp_ratio;
- motor_speed_sp[2] = (-vx + vy + vw * rotate_ratio_f) * motor_speed_sp_ratio;
- motor_speed_sp[3] = (-vx - vy + vw * rotate_ratio_f) * motor_speed_sp_ratio;
+ static float v2rpm_ratio = 19.0f * 60.0f/479.0f;               //unit mm    RPM    m = minute
+ motor_speed_sp[0] = (+vx - vy + vw * rotate_ratio_f) * v2rpm_ratio;
+ motor_speed_sp[1] = (+vx + vy + vw * rotate_ratio_f) * v2rpm_ratio;
+ motor_speed_sp[2] = (-vx + vy + vw * rotate_ratio_f) * v2rpm_ratio;
+ motor_speed_sp[3] = (-vx - vy + vw * rotate_ratio_f) * v2rpm_ratio;
+}
+
+void chassis_task(pid_s_t wheel_pid[])
+{
+  get_chassis_speed();
+  drive_meccanum(chassis_speed.vx, chassis_speed.vy, chassis_speed.vw);
+
+  for(int i=0;i<4;i++)
+  {
+    motor_output[i] = pid_calcu(&wheel_pid[i],motor_speed_sp[i],_encoder[i].speed_rpm);
+  }
+
+  can_motorSetCurrent(
+    0x200,
+    motor_output[0],
+    motor_output[1],
+    motor_output[2],
+    motor_output[3]);
 }

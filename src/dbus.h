@@ -4,6 +4,9 @@
 #include "ch.h"
 #include "hal.h"
 
+
+#include <string.h>
+#include <stdlib.h>
 /* ----------------------- RC Channel Definition---------------------------- */
 #define RC_CH_VALUE_MIN              ((uint16_t)364 )
 #define RC_CH_VALUE_OFFSET           ((uint16_t)1024)
@@ -27,10 +30,10 @@ typedef enum{
 } rc_state_t;
 
 typedef struct{
-	uint16_t channel0;
-	uint16_t channel1;
-	uint16_t channel2;
-	uint16_t channel3;
+	int16_t channel0;
+	int16_t channel1;
+	int16_t channel2;
+	int16_t channel3;
 	uint8_t  s1;
 	uint8_t  s2;
 }RC_Ctl_t;

@@ -30,70 +30,27 @@
 #include "chassis_task.h"
 #include "configure.h"
 
+#include "chassis_task.h"
+
 #include <stdlib.h>
 
 
+int16_t motor_output[4];        //Torque command for motors
 
+pid_s_t wheel_pid[4];
 
-static int16_t motor_output[4];        //Torque command for motors
-
-
-
-//These are the parameters of PID controller
-const float chassis_kp = 0;     //Proportional
-const float chassis_ki = 0;     //Integration
-const float chassis_kd = 0;     //Derivative
-
-static void drive_meccanum(const int16_t vx, const int16_t xy, const int16_t vw)
-{
-    /*
-        TODO: drive the four meccanum wheel individually by using meccanum wheel kinematics
-        eg. motor_speed_sp[FL_WHEEL] = ?? strafe ?? drive ?? rotation;
-        + or -, depends on required speed direction
-    */
-
-  
-
-}
-
-
-
-static int16_t pid_control(const int16_t setPoint, const int16_t current, float* error_int)
-{
-    int16_t output;
-    //int16_t error = ??;
-
-    //static int16_t previous_error = 0;
-
-    //========TODO complete the PID control THD_FUNCTION===========
-    //output = chassis_kp * error; //Proportional controller
-
-    /*
-        NOTE: Limit your maximum integrated error is often useful
-        if(*error_int > YOUR_MAX_ERROR_INT)
-            *error_int = YOUR_MAX_ERROR_INT;
-        else if(*error_int < -YOUR_MAX_ERROR_INT)
-            *error_int = -YOUR_MAX_ERROR_INT;
-    */
-
-    //=============================================================
-    //previous_error = error;
-
-    if(output > 10000)
-        output = 10000;
-    else if(output < -10000)
-        output = -10000;
-
-    return output;
-}
 
 static THD_WORKING_AREA(motor_ctrl_thread_wa,512);
 static THD_FUNCTION(motor_ctrl_thread, p)
 {
     (void) p;
-	int16_t strafe = 0, drive = 0, rotation = 0;   //move direction for chassis
-    Encoder_canStruct* encoder = can_getEncoder(); //Pointer to motor encoder feedbakc
-    static float motor_error_int[4]; //error integrators for the four motors
+  //	int16_t strafe = 0, drive = 0, rotation = 0;   //move direction for chassis
+  //  Encoder_canStruct* encoder = can_getEncoder(); //Pointer to motor encoder feedbakc
+  //  static float motor_error_int[4]; //error integrators for the four motors
+    for(int i=0;i<4;i++)
+    {
+      pid_init(&wheel_pid[i],3.0,0.0,0.0,1000,7000);
+    }
 
 	while(true)
 	{
@@ -105,15 +62,8 @@ static THD_FUNCTION(motor_ctrl_thread, p)
             rotation = (rc->?? - 1024)*12000.0f/1320.0f;
         */
 
-        drive_meccanum(strafe, drive, rotation);
 
-        /*
-            TODO PID speed controller function for motor
-        */
-
-        /*
-            TODO set motor current
-        */
+    chassis_task(wheel_pid);
 
 		chThdSleepMilliseconds(2);
 	}
