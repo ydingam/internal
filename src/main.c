@@ -27,20 +27,24 @@
 
 #include "dbus.h"
 #include "canBusProcess.h"
+#include "chassis_task.h"
+#include "configure.h"
 
 #include <stdlib.h>
 
-static RC_Ctl_t* rc;
+
+
 
 static int16_t motor_output[4];        //Torque command for motors
-static int16_t motor_speed_sp[4];      //speed set-point for motor
+
+
 
 //These are the parameters of PID controller
 const float chassis_kp = 0;     //Proportional
 const float chassis_ki = 0;     //Integration
 const float chassis_kd = 0;     //Derivative
 
-static void drive_meccanum(const int16_t strafe, const int16_t drive, const int16_t rotation)
+static void drive_meccanum(const int16_t vx, const int16_t xy, const int16_t vw)
 {
     /*
         TODO: drive the four meccanum wheel individually by using meccanum wheel kinematics
@@ -48,7 +52,11 @@ static void drive_meccanum(const int16_t strafe, const int16_t drive, const int1
         + or -, depends on required speed direction
     */
 
+  
+
 }
+
+
 
 static int16_t pid_control(const int16_t setPoint, const int16_t current, float* error_int)
 {
@@ -130,7 +138,7 @@ int main(void)
     RC_init();
     can_processInit();
 
-    rc = RC_get();
+    //rc = RC_get();
 
     chThdCreateStatic(motor_ctrl_thread_wa, sizeof(motor_ctrl_thread_wa),
 		  	  	  	 NORMALPRIO, motor_ctrl_thread, NULL);

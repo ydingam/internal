@@ -109,7 +109,7 @@ LDSCRIPT = ./STM32F103x8.ld
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CSRC = $(ALLCSRC) \
-	   ./src/main.c ./src/dbus.c ./src/canBusProcess.c
+	   ./src/main.c ./src/dbus.c ./src/canBusProcess.c ./src/chassis_task.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.

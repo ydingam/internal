@@ -4,13 +4,12 @@
  * @brief   Dbus driver and decoder with keyboard and mouse support and safe lock
  */
 
-#include "ch.h"
-#include "hal.h"
+
 
 #include "dbus.h"
 
 static uint8_t rxbuf[DBUS_BUFFER_SIZE];
-static RC_Ctl_t RC_Ctl;
+RC_Ctl_t RC_Ctl;
 
 static thread_reference_t uart_dbus_thread_handler = NULL;
 
@@ -22,11 +21,41 @@ static rc_state_t rc_state = RC_UNCONNECTED;
 static void decryptDBUS(void)
 {
 	RC_Ctl.channel0 = ((rxbuf[0]) | (rxbuf[1]<<8)) & 0x07FF;
+	RC_Ctl.channel0-=1024;
+
 	RC_Ctl.channel1 = ((rxbuf[1]>>3) | (rxbuf[2]<<5)) & 0x07FF;
+	RC_Ctl.channel1-=1024;
+
 	RC_Ctl.channel2 = ((rxbuf[2]>>6) | (rxbuf[3]<<2) | ((uint32_t)rxbuf[4]	<<10)) & 0x07FF;
+	RC_Ctl.channel2-=1024;
+
 	RC_Ctl.channel3 = ((rxbuf[4]>>1) | (rxbuf[5]<<7)) & 0x07FF;
+	RC_Ctl.channel3 -=1024;
+
 	RC_Ctl.s1 = ((rxbuf[5] >> 4)& 0x000C) >> 2;
 	RC_Ctl.s2 = ((rxbuf[5] >> 4)& 0x0003);
+
+
+	/* 防止遥控器零点有偏差 */
+  if(RC_Ctl.channel0 <= 5 && RC_Ctl.channel0 >= -5)
+    RC_Ctl.channel0 = 0;
+  if(RC_Ctl.channel1 <= 5 && RC_Ctl.channel1 >= -5)
+    RC_Ctl.channel1 = 0;
+  if(RC_Ctl.channel2 <= 5 && RC_Ctl.channel2 >= -5)
+    RC_Ctl.channel2 = 0;
+  if(RC_Ctl.channel3 <= 5 && RC_Ctl.channel3 >= -5)
+    RC_Ctl.channel3 = 0;
+
+
+
+  /* 遥控器异常值处理，函数直接返回 */
+  if ((abs(RC_Ctl.channel0) > 660) || \
+      (abs(RC_Ctl.channel1) > 660) || \
+      (abs(RC_Ctl.channel2) > 660) || \
+      (abs(RC_Ctl.channel3) > 660))
+  {
+    memset(&RC_Ctl, 0, sizeof(RC_Ctl_t));
+  }
 }
 
 /*

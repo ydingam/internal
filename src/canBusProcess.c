@@ -26,19 +26,19 @@ static const CANConfig cancfg = {
 #define CAN_FILTER_NUM 28U
 static CANFilter canfilter[CAN_FILTER_NUM];
 
-volatile Encoder_canStruct* can_getEncoder(void)
+volatile Encoder_canStruct* can_getEncoder(void)   //什么写法？？
 {
   return _encoder;
 }
 
 
-#define CAN_ENCODER_RADIAN_RATIO    7.669904e-4f    // 2*M_PI / 0x2000
+#define CAN_ENCODER_RADIAN_RATIO    7.669904e-4f    // 2*M_PI / 0x2000   8192  14bits
 static void can_processEncoder
   (volatile Encoder_canStruct* cm, const CANRxFrame* const rxmsg)
 {
   uint16_t prev_angle = cm->angle_rotor_raw;
 
-  chSysLock();
+  chSysLock(); // ??why i need to lock the kernal in this step
   cm->updated = true;
   cm->angle_rotor_raw = (uint16_t)(rxmsg->data8[0]) << 8 | rxmsg->data8[1];
   cm->speed_rpm       = (int16_t)(rxmsg->data8[2]) << 8 | rxmsg->data8[3];
@@ -56,13 +56,25 @@ static void can_processEncoder
 
 static void can_processEncoderMessage(const CANRxFrame* const rxmsg)
 {
-    switch(rxmsg->SID)
+    switch(rxmsg->SID)  //why use SID  but the define on the top is
     {
         case CHASSIS_MOTOR_FL_EID:
             can_processEncoder(&_encoder[FL_WHEEL], rxmsg);
             break;
 
-        //TODO process the rest of motor encoder feedback
+        case CHASSIS_MOTOR_FR_EID:
+            can_processEncoder(&_encoder[FR_WHEEL], rxmsg);
+            break;
+
+        case CHASSIS_MOTOR_BR_EID:
+            can_processEncoder(&_encoder[BR_WHEEL], rxmsg);
+            break;
+
+        case CHASSIS_MOTOR_BL_EID:
+            can_processEncoder(&_encoder[BL_WHEEL], rxmsg);
+            break;
+
+
 
         default:break;
     }

@@ -1,6 +1,9 @@
 #ifndef _DBUS_H_
 #define _DBUS_H_
 
+#include "ch.h"
+#include "hal.h"
+
 /* ----------------------- RC Channel Definition---------------------------- */
 #define RC_CH_VALUE_MIN              ((uint16_t)364 )
 #define RC_CH_VALUE_OFFSET           ((uint16_t)1024)
