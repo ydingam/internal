@@ -30,8 +30,8 @@ typedef struct{
 
   float pid_out;
 
-  uint32_t max_integral;
-  uint32_t max_pid_out;
+  float max_integral;
+  float max_pid_out;
 
 }pid_s_t;
 
@@ -51,5 +51,6 @@ float pid_calcu(pid_s_t *pid,float set,float get);
 void chassis_task(pid_s_t wheel_pid[]);
 void get_chassis_speed(void);
 void drive_meccanum(const int16_t vx, const int16_t vy, const int16_t vw);
+void send_zero_motor(void);
 
 #endif /* end of include guard: CHASSIS_TASK */
