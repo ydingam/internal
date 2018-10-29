@@ -49,7 +49,7 @@ static THD_FUNCTION(motor_ctrl_thread, p)
   //  static float motor_error_int[4]; //error integrators for the four motors
     for(int i=0;i<4;i++)
     {
-      pid_init(&wheel_pid[i],2.4f,0.06f,0.0f,1000.0f,7000.0f);
+      pid_init(&wheel_pid[i],7.5f,0.03f,0.0f,1000.0f,12000.0f);
     }
 
 	while(true)

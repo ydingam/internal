@@ -87,37 +87,37 @@ void chassis_task(pid_s_t wheel_pid[])
     send_zero_motor();
   }
 //start
-// if(RC_Ctl.s1==2)
-//   {
-//     if(RC_Ctl.s2==1)
-//     {
-//       for(int i=0;i<4;i++)
-//       {
-//         motor_output[i] = pid_calcu(&wheel_pid[i],400.0f,(float)_encoder[i].speed_rpm);
-//       }
-//     }
-//     if(RC_Ctl.s2==3)
-//     {
-//       for(int i=0;i<4;i++)
-//       {
-//         motor_output[i] = pid_calcu(&wheel_pid[i],300.0f,(float)_encoder[i].speed_rpm);
-//       }
-//     }
-//     if(RC_Ctl.s2==2)
-//     {
-//       for(int i=0;i<4;i++)
-//       {
-//         motor_output[i] = pid_calcu(&wheel_pid[i],200.0f,(float)_encoder[i].speed_rpm);
-//       }
-//     }
-//   can_motorSetCurrent(
-//     0x200,
-//     motor_output[0],
-//     motor_output[1],
-//     motor_output[2],
-//     motor_output[3]);
-//
-//   }
+if(RC_Ctl.s1==2)
+  {
+    if(RC_Ctl.s2==1)
+    {
+      for(int i=0;i<4;i++)
+      {
+        motor_output[i] = pid_calcu(&wheel_pid[i],6000.0f,(float)_encoder[i].speed_rpm);
+      }
+    }
+    if(RC_Ctl.s2==3)
+    {
+      for(int i=0;i<4;i++)
+      {
+        motor_output[i] = pid_calcu(&wheel_pid[i],2000.0f,(float)_encoder[i].speed_rpm);
+      }
+    }
+    if(RC_Ctl.s2==2)
+    {
+      for(int i=0;i<4;i++)
+      {
+        motor_output[i] = pid_calcu(&wheel_pid[i],2000.0f,(float)_encoder[i].speed_rpm);
+      }
+    }
+  can_motorSetCurrent(
+    0x200,
+    motor_output[0],
+    motor_output[1],
+    motor_output[2],
+    motor_output[3]);
+
+  }
 
 }
 
