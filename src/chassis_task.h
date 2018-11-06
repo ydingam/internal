@@ -30,8 +30,8 @@ typedef struct{
 
   float pid_out;
 
-  uint32_t max_integral;
-  uint32_t max_pid_out;
+  float max_integral;
+  float max_pid_out;
 
 }pid_s_t;
 

@@ -34,8 +34,8 @@ typedef struct{
 	int16_t channel1;
 	int16_t channel2;
 	int16_t channel3;
-	uint8_t  s1;
-	uint8_t  s2;
+	rc_switch_t  s1;
+	rc_switch_t  s2;
 }RC_Ctl_t;
 
 RC_Ctl_t* RC_get(void);
