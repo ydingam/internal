@@ -5,9 +5,9 @@
 
 static int16_t motor_final_output;
 
-const float kp_angle = 1.0f;     //Proportional for angle
-const float ki_angle = 0.1f;     //Integration for angle
-const float kd_angle = 0.1f;     //Derivative for angle
+const float kp_angle = 10.0f;     //Proportional for angle
+const float ki_angle = 10.0f;     //Integration for angle
+const float kd_angle = 10.0f;     //Derivative for angle
 
 const float kp_speed = 7.5f;
 const float ki_speed = 0.03f;
@@ -21,6 +21,8 @@ volatile float preError_angle = 0;
 volatile float errorSum_speed = 0;
 volatile float preError_speed = 0;
 
+volatile float angle;
+
 static float angle_pid_control(const float setPoint,
                                const float currentPoint)
 {
@@ -30,10 +32,10 @@ static float angle_pid_control(const float setPoint,
     float errorDiff = error - preError_angle;
     preError_angle = error;
 
-    if(errorSum_angle > 10){
-          errorSum_angle = 10;
-    }else if(errorSum_angle < -10){
-          errorSum_angle = -10;
+    if(errorSum_angle > 30.0f){
+          errorSum_angle = 30.0f;
+    }else if(errorSum_angle < -30.0f){
+          errorSum_angle = -30.0f;
     }
     //limit Sum
     //to be changed: the range
@@ -44,15 +46,15 @@ static float angle_pid_control(const float setPoint,
 
     output = pidp + pidi + pidd;
 
-    if (currentPoint - setPoint <= 10 || setPoint - currentPoint >= -10){
+    if (error <= 5.0f && error >= -5.0f){
       output = 0;
     }
     //to be changed: the range
 
-    if(output > 10000)
-        output = 10000;
-    else if(output < -10000)
-        output = -10000;
+    if(output > 1000)
+        output = 1000;
+    else if(output < -1000)
+        output = -1000;
     //to be changed: the range
 
     return output;
@@ -68,9 +70,9 @@ static int16_t speed_pid_control(const float setPoint_fromAngle,
     float errorDiff = error - preError_speed;
     preError_speed = error;
 
-    if(errorSum_speed > 1000.0f){
+    if(errorSum_speed > 10.0f){
           errorSum_speed = 10;
-    }else if(errorSum_speed < -1000.0f){
+    }else if(errorSum_speed < -10.0f){
           errorSum_speed = -10;
     }
 
@@ -81,13 +83,33 @@ static int16_t speed_pid_control(const float setPoint_fromAngle,
     output = (int)(pidp + pidi + pidd);
     //speed_pid_control should out put a current value to be passed to motor_set_current()
 
-    if(output > 10000)
-        output = 10000;
-    else if(output < -10000)
-        output = -10000;
+    if(output > 750)
+        output = 750;
+    else if(output < -750)
+        output = -750;
     // all the ranges above are to be changed
     return output;
 }
+
+/*
+static float absValue(float a){
+  if (a<0.0f){
+    return -a;
+  }
+  return a;
+}
+*/
+
+
+static int basicTest(float setPoint_forMotor, float currentPoint_fromMotor){
+  if((setPoint_forMotor - currentPoint_fromMotor) < 30.0f &&
+      (setPoint_forMotor - currentPoint_fromMotor) > -30.0f){
+    return 0;
+  }else{
+    return 500;
+  }
+}
+
 
 /**
  * a simple function to link two PID controller
@@ -110,19 +132,27 @@ static int16_t pid_control_all(const float setPoint_forAngle,
     return output;
 }
 
+static float currentAngleCalcu(float radian_angle){
+    while((radian_angle - 27*8192) > 0){
+      radian_angle -= 27*8192;
+    }
+    radian_angle *= 7.669904e-4f;
+    return radian_angle;
+}
+
 static THD_WORKING_AREA(motor_ctrl_thread_wa,512);
 static THD_FUNCTION(motor_ctrl_thread, p)
 {
     (void) p;
     volatile Encoder_canStruct* encoder = can_getEncoder();
-    volatile RC_Ctl_t* rc = RC_get();
+    //volatile RC_Ctl_t* rc = RC_get();
 
 	while(true)
 	{
 	  //todo(DONE): the first parameter of PIDcontrol can be changed by the switch of RC
 
-	  float setPoint = 0.0f;
-
+	  //float setPoint = 0.0f;
+	  /*
 	  switch(rc->s1){
 	  case RC_S_UP:
 	    setPoint = 1.0f;
@@ -136,12 +166,12 @@ static THD_FUNCTION(motor_ctrl_thread, p)
 	  default:
 	    break;
 	  }
-
-	  motor_final_output = pid_control_all(setPoint,
-	                                       ((encoder+0)->angle_rotor_raw)*7.669904e-4f,
-	                                       ((encoder+0)->speed_rpm));
+  */
+	  angle = currentAngleCalcu(encoder->angle_rotor_raw);
+	  motor_final_output = angle_pid_control(50.0f,angle);
 
 	  can_motorSetCurrent(0x200, motor_final_output,0,0,0);
+
 	  chThdSleepMilliseconds(10);
 	}
 }
