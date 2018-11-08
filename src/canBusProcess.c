@@ -26,7 +26,7 @@ static const CANConfig cancfg = {
 #define CAN_FILTER_NUM 28U
 static CANFilter canfilter[CAN_FILTER_NUM];
 
-volatile Encoder_canStruct* can_getEncoder(void)   //什么写法？？
+volatile Encoder_canStruct* can_getEncoder(void)   //浠�涔堝啓娉曪紵锛�
 {
   return _encoder;
 }
@@ -48,8 +48,8 @@ static void can_processEncoder
   if      (cm->angle_rotor_raw - prev_angle >  CAN_ENCODER_RANGE / 2) cm->round_count--;
   else if (cm->angle_rotor_raw - prev_angle < -CAN_ENCODER_RANGE / 2) cm->round_count++;
 
-  cm->total_ecd = cm->round_count * CAN_ENCODER_RANGE + cm->angle_rotor_raw;
-  cm->radian_angle = cm->total_ecd * CAN_ENCODER_RADIAN_RATIO;
+  cm->total_ecd = cm->round_count * CAN_ENCODER_RANGE + cm->angle_rotor_raw; // about 8192*?
+  cm->radian_angle = cm->total_ecd * CAN_ENCODER_RADIAN_RATIO; //can be bigger than 3.14*2 == 2*PI
 
   chSysUnlock();
 }

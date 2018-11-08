@@ -9,9 +9,9 @@ const float kp_angle = 1.0f;     //Proportional for angle
 const float ki_angle = 0.1f;     //Integration for angle
 const float kd_angle = 0.1f;     //Derivative for angle
 
-const float kp_speed = 1.0f;
-const float ki_speed = 1.0f;
-const float kd_speed = 1.0f;
+const float kp_speed = 7.5f;
+const float ki_speed = 0.03f;
+const float kd_speed = 0.0f;
 
 //all to be modified
 
@@ -21,7 +21,8 @@ volatile float preError_angle = 0;
 volatile float errorSum_speed = 0;
 volatile float preError_speed = 0;
 
-static float angle_pid_control(const float setPoint, const float currentPoint)
+static float angle_pid_control(const float setPoint,
+                               const float currentPoint)
 {
     float output;
     float error = setPoint - currentPoint;
@@ -58,7 +59,8 @@ static float angle_pid_control(const float setPoint, const float currentPoint)
     //return a float so that it can be received by speed_pid_control()
 }
 
-static int16_t speed_pid_control(const float setPoint_fromAngle, const float currentPoint_fromMotor)
+static int16_t speed_pid_control(const float setPoint_fromAngle,
+                                 const float currentPoint_fromMotor)
 {
     int16_t output;
     float error = setPoint_fromAngle - currentPoint_fromMotor;
@@ -66,9 +68,9 @@ static int16_t speed_pid_control(const float setPoint_fromAngle, const float cur
     float errorDiff = error - preError_speed;
     preError_speed = error;
 
-    if(errorSum_speed > 10){
+    if(errorSum_speed > 1000.0f){
           errorSum_speed = 10;
-    }else if(errorSum_speed < -10){
+    }else if(errorSum_speed < -1000.0f){
           errorSum_speed = -10;
     }
 
@@ -99,10 +101,12 @@ static int16_t pid_control_all(const float setPoint_forAngle,
                                const float currentSpeed_fromMotor)
 {
     int16_t output;
-    int16_t setPoint_fromAngle = angle_pid_control(setPoint_forAngle, currentPoint_fromMotor);
+    int16_t setPoint_fromAngle = angle_pid_control(setPoint_forAngle,
+                                                   currentPoint_fromMotor);
     //setPoint_fromAngle: a speed setPoint to be passed to speed_pid_control()
 
-    output = speed_pid_control(setPoint_fromAngle, currentSpeed_fromMotor);
+    output = speed_pid_control(setPoint_fromAngle,
+                               currentSpeed_fromMotor);
     return output;
 }
 
@@ -134,7 +138,7 @@ static THD_FUNCTION(motor_ctrl_thread, p)
 	  }
 
 	  motor_final_output = pid_control_all(setPoint,
-	                                       ((encoder+0)->radian_angle),
+	                                       ((encoder+0)->angle_rotor_raw)*7.669904e-4f,
 	                                       ((encoder+0)->speed_rpm));
 
 	  can_motorSetCurrent(0x200, motor_final_output,0,0,0);
